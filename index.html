@@ -1,0 +1,293 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>単語登録</title>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+	<script type="text/javascript" src="js/jquery-ui-1.8.13.custom.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="css/ui-lightness/jquery-ui-1.8.13.custom.css">
+	<link href="css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<script language="Javascript" type="text/javascript"> 
+//<![CDATA[
+jQuery(function(){
+
+var db ={
+    set : function(key, obj){
+        localStorage.setItem(key, JSON.stringify(obj));
+    },
+
+    get : function(key){
+        return JSON.parse(localStorage.getItem(key));
+    },
+	
+	clear : function(key){
+		localStorage.setItem(key, "");
+	},
+
+    each : function(fun){
+        try{
+            for (var i=0; i<localStorage.length; i++){
+                var k = localStorage.key(i);
+                fun(k,db.get(k));
+            }
+        }catch(e){
+            for (var key in localStorage){
+                if(key === 'key') continue;
+                fun(key,db.get(key));
+            }
+        }
+    }
+};
+
+
+(function($) {
+    var Word = (function() {
+        var word_list = [];
+
+        function set(word, mean, example, check){
+            word_list.push({
+                word : word,
+                mean : mean,
+                example : example,
+				check : check
+            });
+        }
+        
+        function get(i){
+            return word_list[i];
+        }
+		
+		return {
+			set : set,
+			get : get,
+			word_list : word_list
+		}
+    })();
+
+    var Disp = (function () {
+        function append (o){
+            var $d			= $("<div/>").attr("class", "item");
+			var $edit_btn 	= $("<span/>").attr("class", "edit_btn").append("edit");    
+            var $w 			= $("<span/>").attr("class", "word").append(o.word);    
+            var $m 			= $("<span/>").attr("class", "mean").append(o.mean);    
+            var $e 			= $("<span/>").attr("class", "example").append(o.example);    
+			var $c 			= $("<span/>").attr("class", "check").append("check: ").append(o.check);    
+			
+			$d.append($edit_btn);
+            $d.append($w);
+            $d.append($m);
+            $d.append($e);
+            $d.append($c);
+			
+			$edit_btn.click(function(){
+                $("#word").val(o.word);
+                $("#mean").val(o.mean);
+                $("#example").val(o.example);
+				$("#check").val(o.check);			
+			});
+			
+            $d.click(function(){
+				add_count(o);
+				Disp.checked(o);
+				get_mean(o.word);
+				$(this).hide();
+            });
+            $("#registered_words").append($d); 
+        }
+			
+		function checked(o) {
+   	        var $d			= $("<div/>").attr("class", "item");
+			var $edit_btn 	= $("<span/>").attr("class", "edit_btn").append("edit");    
+            var $w 			= $("<span/>").attr("class", "word").append(o.word);    
+            var $m 			= $("<span/>").attr("class", "mean").append(o.mean);    
+            var $e 			= $("<span/>").attr("class", "example").append(o.example);    
+			var $c 			= $("<span/>").attr("class", "check").append("check: ").append(o.check);    
+			$d.append($edit_btn);
+            $d.append($w);
+            $d.append($m);
+            $d.append($e);
+            $d.append($c);
+	
+			$("#checked_words").append($d);
+		}
+		
+		function clear() {
+			$("#registered_words").empty(); 
+		}
+			
+		return {
+			append : append,
+			clear : clear,
+			checked : checked
+		}
+    })();
+
+	function post(id, data) {
+		$.ajax({
+			url: 'http://socialgeeks.sakura.ne.jp/croword/cgi-bin/post.cgi',
+			data: {
+				id 	: id,
+				data : data
+			},
+			dataType: 'json',
+			success: function(res) {
+				alert(res);
+			},
+			error: function(res) {
+				alert("  通信に失敗しました。");
+			}
+		});
+	}
+
+	function get_mean(query) {
+		$.ajax({
+			url: 'http://eow.alc.co.jp/'+ query +'/UTF-8/',
+			dataType: 'html',
+			success: function(res) {
+				alert(res);
+			},
+			error: function(res) {
+				alert("  通信に失敗しました。");
+			}
+		});
+	}
+
+	function fill_in_words() {
+		Disp.clear();
+		var obj = db.get( id.val());
+		if(obj) {
+			$.each(obj, function(i) {
+				Disp.append(obj[i]);
+			});
+			$("#word_count").empty().append(obj.length);
+		}
+	}
+
+	function add_count(obj){
+		obj.check++;
+	}
+	
+    var id      =  $("#id"),
+        word    =  $("#word");
+
+    function reset_form(){
+        $("#word").val("");
+        $("#mean").val("");
+        $("#example").val("");
+		$("#check").val("");
+    }
+
+    $("#set").click(function(){
+        var w = $("#word").val();
+        var m = $("#mean").val();
+        var e = $("#example").val();
+		var c = $("#check").val();
+		
+        Word.set(w, m, e, c);
+        reset_form();
+    });
+	
+	function hide_all_tabs() {
+		$("#input_form").hide();
+		$("#registered_words").hide();
+		$("#checked_words").hide();
+	}
+
+	$("#register_word_tab").click(function(){
+		hide_all_tabs();
+		$("#input_form").show();
+	});
+	
+    $("#check_words_tab").click(function(){
+		hide_all_tabs();
+		$("#registered_words").show();
+		fill_in_words();
+	});
+	
+	$("#tab_checked").click(function(){
+		hide_all_tabs();
+		$("#checked_words").show();
+	});
+	
+	
+	$("#submit").click(function(){
+        db.set( id.val(), Word.word_list);
+	});
+	
+	$("#post").click(function(){
+        post( id.val(), Word.word_list);
+    });
+	
+	$("#display").click(function(){
+        $("#registered_words").show();
+		fill_in_words();
+    });
+
+})(jQuery);
+})
+//]]>
+</script>
+<div id="header"><span id="logo">croword </span>your id:<fb:login-button>Login with Facebook</fb:login-button><input type="text" id="id"></div>
+<div id="body">
+	<div id="menu">
+        <ul>
+            <li id="register_word_tab">word</li>
+            <li id="check_words_tab">check</li>
+            <li id="tab_checked">checked</li>
+        </ul>
+    </div>
+    <div id="input_form">
+        <span>登録単語数<span id="word_count"></span>個</span>
+        <dl>
+            <dt>word:</dt>
+            <dd><input type="text" size="40" maxlength="200" id="word"></dd>
+            <dt>mean:</dt>
+            <dd><textarea rows="4" cols="40" id="mean"></textarea></dd>
+            <dt>example:</dt>
+            <dd><textarea rows="4" cols="40" id="example"></textarea></dd>
+            <dt>check:</dt>
+            <dd><input type="text" id="check"></dd>
+        </dl>
+        <input type="button" id="set" value="set">
+        <input type="button" id="submit" value="submit">
+        <input type="button" id="post" value="post">
+    </div>
+	<div id="registered_words">
+        <input type="button" id="display" value="単語を表示する">
+        <span class="msg">register words</span></br>    
+    </div>
+    <div id="checked_words">
+    </div>
+</div>
+<div id="footer">copyright socialgeeks.</div>
+<div id="fb-root"></div>
+<script src="http://connect.facebook.net/en_US/all.js"></script>
+<script>
+ FB.init({ 
+	appId:'228232853864149', cookie:true, 
+	status:true, xfbml:true 
+ });
+ FB.api('/me', function(user) {
+   if(user != null) {
+ 	  $("#id").val(user.name);
+   }
+ });
+</script>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-23731605-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</body>
+</html>
+

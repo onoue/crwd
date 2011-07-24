@@ -1,0 +1,52 @@
+/* CSS Document */
+
+#header {
+    height              : 30px;
+    background-color    : #ccc;
+}
+
+#menu {
+	border : 1px solid #000;	
+}
+
+#input_form {
+	border : 1px solid #000;	
+}
+
+.item {
+	width : 450px;
+    border : 1px solid #000;  
+}
+
+.word {
+    display : block;
+	font-size:23px;
+	color: #93A644;
+}
+
+.mean{
+    display : block;
+}
+
+.example {
+    display 	: block;
+	font-size	: 12px;
+	
+}
+
+ul {
+	margin-bottom	: 0px;	
+}
+
+li {
+	padding-top		: 0;
+	padding-right	: 10px;
+	margin-bottom	: 0px;
+	list-style		: none;
+	display			: inline;
+	border			: 1px solid #000;
+}
+
+li:last-child {
+	float:none;	
+}
